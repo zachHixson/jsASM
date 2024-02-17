@@ -2,10 +2,6 @@ function numOperator(self, num1, num2, callback) {
     const n1 = num1.get();
     const n2 = num2.get();
 
-    if (isNaN(n1) || isNaN(n2)){
-        throw new Error(`Error on line: ${self.registers.lp}. Argument is NaN`);
-    }
-
     self.registers.res = callback(n1, n2);
 }
 
