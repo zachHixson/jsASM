@@ -1,6 +1,6 @@
 function numOperator(self, num1, num2, callback) {
-    const n1 = self.getData(num1);
-    const n2 = self.getData(num2);
+    const n1 = num1.get();
+    const n2 = num2.get();
 
     if (isNaN(n1) || isNaN(n2)){
         throw new Error(`Error on line: ${self.registers.lp}. Argument is NaN`);
@@ -10,13 +10,20 @@ function numOperator(self, num1, num2, callback) {
 }
 
 const instructionCode = {
-    NOP: function(){},
     test: function(){
         console.log(this.memory[0], this.registers.r1);
     },
+    time: function(){
+        console.time('timer');
+    },
+    timeEnd: function(){
+        console.timeEnd('timer');
+    },
+
+    NOP: function(){},
     mov: function(srcArg, destArg){
-        const src = this.getData(srcArg);
-        this.setData(destArg, src);
+        const src = srcArg.get();
+        destArg.set(src);
     },
     add: function(num1, num2){
         numOperator(this, num1, num2, (a, b) => a + b);
@@ -34,33 +41,33 @@ const instructionCode = {
         numOperator(this, num1, num2, (a, b) => Math.sign(a - b));
     },
     jmp: function(dest){
-        this.registers.lp = Math.max(Math.min(this.getData(dest)), 0) - 1;
+        this.registers.lp = Math.max(Math.min(dest.get()), 0) - 1;
     },
     jre: function(dest){
-        this.registers.lp += Math.max(Math.min(this.getData(dest)), 0) - 1;
+        this.registers.lp += Math.max(Math.min(dest.get()), 0) - 1;
     },
     jlt: function(dest){
         if (this.registers.res >= 0) return;
-        this.registers.lp = Math.max(Math.min(this.getData(dest)), 0) - 1;
+        this.registers.lp = Math.max(Math.min(dest.get()), 0) - 1;
     },
     jgt: function(dest){
         if (this.registers.res <= 0) return;
-        this.registers.lp = Math.max(Math.min(this.getData(dest)), 0) - 1;
+        this.registers.lp = Math.max(Math.min(dest.get()), 0) - 1;
     },
     jle: function(dest){
         if (this.registers.res > 0) return;
-        this.registers.lp = Math.max(Math.min(this.getData(dest)), 0) - 1;
+        this.registers.lp = Math.max(Math.min(dest.get()), 0) - 1;
     },
     jge: function(dest){
         if (this.registers.res < 0) return;
-        this.registers.lp = Math.max(Math.min(this.getData(dest)), 0) - 1;
+        this.registers.lp = Math.max(Math.min(dest.get()), 0) - 1;
     },
     jeq: function(dest){
         if (this.registers.res != 0) return;
-        this.registers.lp = Math.max(Math.min(this.getData(dest)), 0) - 1;
+        this.registers.lp = Math.max(Math.min(dest.get()), 0) - 1;
     },
-    push: function(srcArg){
-        const data = this.getData(srcArg);
+    push: function(val){
+        const data = val.get();
         this.registers.stp--;
 
         if (this.registers.stp < 0){
@@ -70,7 +77,7 @@ const instructionCode = {
         this.memory[this.registers.stp] = data;
     },
     pop: function(srcArg){
-        const data = srcArg == undefined ? 1 : this.getData(srcArg);
+        const data = srcArg == undefined ? 1 : srcArg.get();
         this.registers.stp = Math.min(this.registers.stp + data, this.registers.vm);
     },
     ret: function(){
@@ -133,6 +140,55 @@ class Machine {
         return labelMap;
     }
 
+    getMemoryAccessor(addrAccessor){
+        return {
+            get: ()=>this.getMemory(addrAccessor()),
+            set: (val)=>this.setMemory(addrAccessor(), val),
+        }
+    }
+
+    parseArgument(arg, lineNumber, labelMap) {
+        //parse numerical values
+        if (!isNaN(arg)){
+            const val = parseInt(arg);
+            return {get: ()=>val, set: ()=>{}};
+        }
+
+        //parse labels
+        if (arg[0] == ':'){
+            const mapGet = labelMap.get(arg);
+
+            if (mapGet == undefined){
+                throw new Error(`Error on line: ${lineNumber}. Cannot find declaration of label ${arg}`);
+            }
+
+            return {get: ()=>mapGet, set: ()=>{}};
+        }
+
+        //parse registers
+        if (arg in this.registers){
+            return {
+                get: ()=>this.registers[arg],
+                set: (val)=>this.registers[arg] = val,
+            };
+        }
+
+        //parse memory addresses
+        const slice = arg.slice(1);
+        const accessor = this.parseArgument(slice, lineNumber, labelMap);
+
+        if (arg[0] == '&'){
+            return this.getMemoryAccessor(accessor.get);
+        }
+
+        if (arg[0] == '$'){
+            return this.getMemoryAccessor(()=>this.registers.stp + accessor.get());
+        }
+
+        //throw error if argument is none of the above
+        throw new Error(`Error, unknown symbol: '${arg}' on line: ${lineNumber}`);
+    }
+
     parseInstruction(lineNumber, line, labelMap){
         //check non-instruction lines
         const isEmpty = line.length == 0;
@@ -146,32 +202,30 @@ class Machine {
         const tokens = line.split(' ');
         const instructionName = tokens[0];
         const instruction = instructionCode[instructionName];
-        const args = [...tokens].splice(1);
+        const args = [];
 
         if (!instruction) {
             console.error(`Error, unknown instruction: ${instructionName} : ${lineNumber}`);
             return {instruction: instructionCode.NOP};
         }
 
-        args.forEach((val, idx) => {
-            if (val[0] == ':'){
-                const mapGet = labelMap.get(val);
-                if (mapGet == undefined) {
-                    console.warn(`Error, could not find label with name ${val.slice(1)}. Replacing with line number 0`);
-                    return;
-                };
-                args[idx] = mapGet;
+        //parse args
+        for (let i = 1; i < tokens.length; i++){
+            if (tokens[i].length == 0){
+                continue;
             }
 
-            if (val[0] == '#'){
-                args.splice(idx);
-                return;
+            if (tokens[i][0] == '#'){
+                i = tokens.length;
+                continue;
             }
 
-            if (!isNaN(val)){
-                tokens[idx] = parseFloat(val);
+            const result = this.parseArgument(tokens[i], lineNumber, labelMap);
+
+            if (result){
+                args.push(result);
             }
-        });
+        }
         
         return {instruction: instruction.bind(this), args};
     }
@@ -192,83 +246,6 @@ class Machine {
         this.memory[addr] = val;
     }
 
-    getData(arg){
-        if (isNaN(arg)){
-            const slice = arg.slice(1);
-            
-            if (arg[0] == '&'){
-                if (!isNaN(slice)){
-                    return this.getMemory(parseInt(slice));
-                }
-
-                if (this.registers[slice] != undefined){
-                    return this.getMemory(parseInt(this.registers[slice]));
-                }
-            }
-
-            if (arg[0] == '$'){
-                if (!isNaN(slice)){
-                    const stackOffset = parseInt(slice);
-                    return this.getMemory(this.registers.stp + stackOffset);
-                }
-
-                if (this.registers[slice] != undefined){
-                    return this.memory[this.registers.stp + this.registers[slice]];
-                }
-            }
-
-            const regGet = this.registers[arg];
-            if (regGet == undefined){
-                throw new Error(`Error, unknown register: ${arg} on line: ${this.registers.lp}`);
-            }
-
-            return regGet;
-        }
-
-        return parseInt(arg);
-    }
-
-    setData(arg, val){
-        if (isNaN(arg)){
-            const slice = arg.slice(1);
-            
-            if (arg[0] == '&'){
-                if (!isNaN(slice)){
-                    this.memory[parseInt(slice)] = val;
-                    return;
-                }
-
-                if (this.registers[slice] != undefined){
-                    this.memory[this.registers[slice]] = val;
-                    return;
-                }
-            }
-
-            if (arg[0] == '$'){
-                if (!isNaN(slice)){
-                    const stackOffset = parseInt(slice);
-                    this.memory[this.registers.stp + stackOffset] = val;
-                    return;
-                }
-                
-                if (this.registers[slice] != undefined){
-                    this.memory[this.registers.stp + this.registers[slice]] = val;
-                    return;
-                }
-            }
-
-            const regGet = this.registers[arg];
-            if (regGet == undefined){
-                throw new Error(`Error, unknown register: ${arg} on line: ${this.registers.lp}`);
-            }
-
-            this.registers[arg] = val;
-            return;
-        }
-
-        throw new Error('Error on line:', this.registers.lp, 'invalid argument', arg);
-    }
-
     execute() {
         do {
             const instruction = this.instructions[this.registers.lp];
@@ -285,13 +262,11 @@ class Machine {
     }
 
     draw(ctx){
+        //console.time('render');
         const canvas = ctx.canvas;
         const imgData = new ImageData(canvas.width, canvas.height);
 
         ctx.imageSmoothingEnabled = false;
-
-        ctx.fillStyle = 'black';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
 
         this.registers.vb = 0;
 
@@ -316,5 +291,6 @@ class Machine {
         this.registers.vb = 1;
         this.registers.lp = 0;
         this.execute();
+        //console.timeEnd('render');
     }
 }
