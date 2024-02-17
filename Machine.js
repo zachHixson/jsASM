@@ -11,7 +11,7 @@ function numOperator(self, num1, num2, callback) {
 
 const instructionCode = {
     test: function(){
-        console.log(this.memory[0], this.registers.r1);
+        console.log(this.registers.res);
     },
     time: function(){
         console.time('timer');
@@ -21,9 +21,8 @@ const instructionCode = {
     },
 
     NOP: function(){},
-    mov: function(srcArg, destArg){
-        const src = srcArg.get();
-        destArg.set(src);
+    mov: function(src, dest){
+        dest.set(src.get());
     },
     add: function(num1, num2){
         numOperator(this, num1, num2, (a, b) => a + b);
@@ -196,7 +195,7 @@ class Machine {
         const isLabel = line[0] == ':';
 
         if (isEmpty || isComment || isLabel){
-            return {instruction: instructionCode.NOP, args: []};
+            return instructionCode.NOP;
         }
 
         const tokens = line.split(' ');
@@ -206,7 +205,7 @@ class Machine {
 
         if (!instruction) {
             console.error(`Error, unknown instruction: ${instructionName} : ${lineNumber}`);
-            return {instruction: instructionCode.NOP};
+            return instructionCode.NOP;
         }
 
         //parse args
@@ -227,7 +226,7 @@ class Machine {
             }
         }
         
-        return {instruction: instruction.bind(this), args};
+        return instruction.bind(this, ...args);
     }
 
     getMemory(addr){
@@ -248,8 +247,7 @@ class Machine {
 
     execute() {
         do {
-            const instruction = this.instructions[this.registers.lp];
-            instruction.instruction(...instruction.args);
+            const instruction = this.instructions[this.registers.lp]();
             this.registers.lp++;
         } while(this.registers.lp < this.instructions.length);
     }
@@ -265,8 +263,6 @@ class Machine {
         //console.time('render');
         const canvas = ctx.canvas;
         const imgData = new ImageData(canvas.width, canvas.height);
-
-        ctx.imageSmoothingEnabled = false;
 
         this.registers.vb = 0;
 

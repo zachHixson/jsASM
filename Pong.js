@@ -18,10 +18,13 @@ const code = `
         jlt :clearLoop
 
     #draw point
-    mul vl 10
-    mov res r1 #r1 = offset
-    add r1 vm  #calculate virtual memory location
+    #mul vl 10
+    #mov res r1 #r1 = offset
+    #add r1 vm  #calculate virtual memory location
     #mov 1 &res #set virual memory address
+
+    add vl vm #offset
+    mov 1 &res
 
     end
 `;
