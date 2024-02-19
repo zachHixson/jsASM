@@ -1,13 +1,6 @@
-function numOperator(self, num1, num2, callback) {
-    const n1 = num1.get();
-    const n2 = num2.get();
-
-    self.registers.res = callback(n1, n2);
-}
-
 const instructionCode = {
-    test: function(){
-        console.log(this.registers.res);
+    log: function(val){
+        console.log(val.get());
     },
     time: function(){
         console.time('timer');
@@ -15,25 +8,37 @@ const instructionCode = {
     timeEnd: function(){
         console.timeEnd('timer');
     },
+    dbg: function(){
+        debugger;
+    },
 
     NOP: function(){},
     mov: function(src, dest){
         dest.set(src.get());
     },
     add: function(num1, num2){
-        numOperator(this, num1, num2, (a, b) => a + b);
+        this.registers.res = num1.get() + num2.get();
     },
     sub: function(num1, num2){
-        numOperator(this, num1, num2, (a, b) => a - b);
+        this.registers.res = num1.get() - num2.get();
     },
     mul: function(num1, num2){
-        numOperator(this, num1, num2, (a, b) => a * b);
+        this.registers.res = num1.get() * num2.get();
     },
     div: function(num1, num2){
-        numOperator(this, num1, num2, (a, b) => a / b);
+        this.registers.res = num1.get() / num2.get();
+    },
+    min: function(num1, num2){
+        this.registers.res = Math.min(num1.get(), num2.get());
+    },
+    max: function(num1, num2){
+        this.registers.res = Math.max(num1.get(), num2.get());
+    },
+    abs: function(num){
+        this.registers.res = Math.abs(num.get());
     },
     cmp: function(num1, num2){
-        numOperator(this, num1, num2, (a, b) => Math.sign(a - b));
+        this.registers.res = Math.sign(num1.get() - num2.get());
     },
     jmp: function(dest){
         this.registers.lp = Math.max(Math.min(dest.get()), 0) - 1;
@@ -72,32 +77,26 @@ const instructionCode = {
         this.memory[this.registers.stp] = data;
     },
     pop: function(srcArg){
-        const data = srcArg == undefined ? 1 : srcArg.get();
-        this.registers.stp = Math.min(this.registers.stp + data, this.registers.vm);
+        const count = srcArg == undefined ? 1 : srcArg.get();
+        this.registers.stp = Math.min(this.registers.stp + count, this.registers.vm);
+    },
+    call: function(insNum){
+        this.registers.ret = this.registers.lp;
+        this.registers.lp = insNum.get();
     },
     ret: function(){
         this.registers.lp = this.registers.ret;
-    },
-    call: function(insNum){
-        this.executeSysCall(insNum);
     },
     end: function(){
         this.registers.lp = this.instructions.length;
     },
 }
 
-const sysFunctions = [
-    //log
-    function (){
-        console.log(this.registers.r1);
-    }
-];
-
 class Machine {
     static MEMORY_SIZE = 1024 * 2;
 
     isRunning = true;
-    memory = new Uint8ClampedArray(Machine.MEMORY_SIZE);
+    memory = new Int16Array(Machine.MEMORY_SIZE);
     instructions;
     registers = {
         lp: 0,
@@ -107,7 +106,7 @@ class Machine {
         r4: 0,
         res: 0,
         sys: 0,
-        vm: Machine.MEMORY_SIZE - 224,
+        vm: 0,
         vl: 0,
         vb: 0,
         ret: 0,
@@ -121,6 +120,7 @@ class Machine {
         this.instructions = lines
             .map((line, lineNumber) => this.parseInstruction(lineNumber, line, labelMap));
         
+        this.registers.vm = Machine.MEMORY_SIZE - 289;
         this.registers.stp = this.registers.vm;
     }
 
@@ -200,8 +200,7 @@ class Machine {
         const args = [];
 
         if (!instruction) {
-            console.error(`Error, unknown instruction: ${instructionName} : ${lineNumber}`);
-            return instructionCode.NOP;
+            throw new Error(`Error, unknown instruction: ${instructionName} : ${lineNumber}`);
         }
 
         //parse args
@@ -243,7 +242,7 @@ class Machine {
 
     execute() {
         do {
-            const instruction = this.instructions[this.registers.lp]();
+            this.instructions[this.registers.lp]();
             this.registers.lp++;
         } while(this.registers.lp < this.instructions.length);
     }
