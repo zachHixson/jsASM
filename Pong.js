@@ -37,11 +37,11 @@ mov 1 &0
         max r1 r3
         mov res r3
 
+        :drawAIPaddle
         #skip AI paddle drawing if we're too far left
         cmp $1 268
         jlt :setPixelValue
 
-        :drawAIPaddle
         push 273
         push &3
         push $3
