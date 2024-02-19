@@ -105,7 +105,6 @@ class Machine {
         r3: 0,
         r4: 0,
         res: 0,
-        sys: 0,
         vm: 0,
         vl: 0,
         vb: 0,
@@ -245,13 +244,6 @@ class Machine {
             this.instructions[this.registers.lp]();
             this.registers.lp++;
         } while(this.registers.lp < this.instructions.length);
-    }
-
-    executeSysCall(funcNum){
-        if (sysFunctions[funcNum] == undefined){
-            throw new Error(`Error on line ${this.registers.lp}, system function number ${funcNum} does not exist`);
-        }
-        sysFunctions[funcNum].call(this);
     }
 
     draw(ctx){
