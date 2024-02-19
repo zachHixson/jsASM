@@ -24,6 +24,10 @@ mov 1 &0
         mov res $0
         mov 0 r3
 
+        #skip player paddle drawing if we're too far right
+        cmp $1 20
+        jgt :drawAIPaddle
+
         #get player paddle result
         push 15
         push &2
@@ -33,7 +37,11 @@ mov 1 &0
         max r1 r3
         mov res r3
 
-        #get AI paddle result
+        #skip AI paddle drawing if we're too far left
+        cmp $1 268
+        jlt :setPixelValue
+
+        :drawAIPaddle
         push 273
         push &3
         push $3
@@ -42,7 +50,7 @@ mov 1 &0
         max r1 r3
         mov res r3
         
-        #set pixel value
+        :setPixelValue
         mov r3 &$0
         add 1 $1
         mov res $1
