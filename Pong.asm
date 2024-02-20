@@ -1,4 +1,3 @@
-const code = `
 cmp &0 1
 jeq :start
 
@@ -32,8 +31,9 @@ mov 1 &0
         push 15
         push &2
         push $3
-        call :drawPaddle()
-        pop 3
+        push vl
+        call :sampleRect()
+        pop 4
         max r1 r3
         mov res r3
 
@@ -45,8 +45,9 @@ mov 1 &0
         push 273
         push &3
         push $3
-        call :drawPaddle()
-        pop 3
+        push vl
+        call :sampleRect()
+        pop 4
         max r1 r3
         mov res r3
         
@@ -61,18 +62,19 @@ mov 1 &0
     pop 2
     end
 
-:drawPaddle()
-    # @param paddle center X
-    # @param paddle center Y
+:sampleRect()
+    # @param rect center X
+    # @param rect center Y
     # @param current screen X pos
-    # @out r1 = is pixel filled
+    # @param current screen Y pos
+    # @out r1 = hit result
 
-    sub $0 $2    # subtract x pos from screen x
+    sub $1 $3    # subtract x pos from screen x
     abs res      # abs result
     sub res 5    # subtract width from result
     mov res r1   # store in r1
 
-    sub vl $1    # subtract y pos from screen y
+    sub $0 $2    # subtract y pos from screen y
     abs res      # abs result
     sub res 50   # subtract height from result
     mov res r2   # store in r2
@@ -84,4 +86,3 @@ mov 1 &0
 
     mov res r1
     ret
-`;

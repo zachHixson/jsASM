@@ -5,20 +5,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pong ASM</title>
     <script src="./machine.js"></script>
-    <script src="./Pong.js"></script>
     <script>
-        const machine = new Machine(code);
-
         window.onload = ()=>{
             const canvas = document.getElementById('canvas');
             const ctx = canvas.getContext('2d');
 
-            draw(ctx);
+            fetch('./Pong.asm')
+                .then(r => r.text())
+                .then(t => {
+                    machine = new Machine(t);
+                    draw(machine, ctx);
+                });
         }
 
-        function draw(ctx){
-            machine.draw(ctx);
-            requestAnimationFrame(()=>draw(ctx));
+        function draw(machine, context){
+            machine.draw(context);
+            requestAnimationFrame(()=>draw(machine, context));
         }
     </script>
     <style>
