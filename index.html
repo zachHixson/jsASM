@@ -14,6 +14,12 @@
                 .then(r => r.text())
                 .then(t => {
                     machine = new Machine(t);
+                    machine.setInput(0, 112);
+                    canvas.addEventListener('mousemove', e=>{
+                        const percentage = e.offsetY / canvas.clientHeight;
+                        const screenVal = Math.round(percentage * 224);
+                        machine.setInput(0, screenVal);
+                    });
                     draw(machine, ctx);
                 });
         }

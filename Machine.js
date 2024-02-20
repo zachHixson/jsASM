@@ -9,6 +9,10 @@ const instructionCode = {
         console.timeEnd('timer');
     },
     dbg: function(){
+        const memory = this.memory;
+        const videoMem = [...this.memory].splice(this.registers.vm);
+        const registers = this.registers;
+        const stack = [...this.memory].splice(this.registers.stp);
         debugger;
     },
 
@@ -85,6 +89,7 @@ const instructionCode = {
         this.registers.lp = insNum.get();
     },
     ret: function(){
+        //debugger;
         this.registers.lp = this.registers.ret;
     },
     end: function(){
@@ -108,8 +113,9 @@ class Machine {
         vm: 0,
         vl: 0,
         vb: 0,
-        ret: 0,
+        inp: 0,
         stp: 0,
+        ret: 0,
     }
 
     constructor(code){
@@ -119,8 +125,10 @@ class Machine {
         this.instructions = lines
             .map((line, lineNumber) => this.parseInstruction(lineNumber, line, labelMap));
         
+        //Partition memory
         this.registers.vm = Machine.MEMORY_SIZE - 289;
-        this.registers.stp = this.registers.vm;
+        this.registers.inp = this.registers.vm - 4;
+        this.registers.stp = this.registers.inp;
     }
 
     getLabelMap(lines){
@@ -262,10 +270,10 @@ class Machine {
 
             for (let x = 0; x < canvas.width; x++){
                 const pxPtr = rowPtr + x * 4;
-                const vMemVal = Math.min(this.memory[this.registers.vm + x], 1);
-                imgData.data[pxPtr + 0] = vMemVal * 255;
-                imgData.data[pxPtr + 1] = vMemVal * 255;
-                imgData.data[pxPtr + 2] = vMemVal * 255;
+                const vMemVal = Math.min(this.memory[this.registers.vm + x], 1) * 255;
+                imgData.data[pxPtr + 0] = vMemVal;
+                imgData.data[pxPtr + 1] = vMemVal;
+                imgData.data[pxPtr + 2] = vMemVal;
                 imgData.data[pxPtr + 3] = 255;
             }
         }
@@ -275,5 +283,9 @@ class Machine {
         this.registers.lp = 0;
         this.execute();
         //console.timeEnd('render');
+    }
+
+    setInput(addr, value){
+        this.memory[this.registers.inp + addr] = value;
     }
 }
