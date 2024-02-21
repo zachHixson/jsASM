@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pong ASM</title>
     <script src="../machine.js"></script>
+    <script src="./Pong_ASM.js"></script>
     <script>
         window.onload = ()=>{
             const canvas = document.getElementById('canvas');
@@ -13,20 +14,17 @@
                 memory: 1024 * 2,
                 videoMemory: 289,
                 inputs: 1,
-            }
+            };
+            const machine = new Machine(pongCode, machineSettings);
 
-            fetch('./Pong.asm')
-                .then(r => r.text())
-                .then(t => {
-                    machine = new Machine(t, machineSettings);
-                    machine.setInput(0, 112);
-                    canvas.addEventListener('mousemove', e=>{
-                        const percentage = e.offsetY / canvas.clientHeight;
-                        const screenVal = Math.round(percentage * 224);
-                        machine.setInput(0, screenVal);
-                    });
-                    draw(machine, ctx);
-                });
+            machine.setInput(0, 112);
+            canvas.addEventListener('mousemove', e=>{
+                const percentage = e.offsetY / canvas.clientHeight;
+                const screenVal = Math.round(percentage * 224);
+                machine.setInput(0, screenVal);
+            });
+
+            draw(machine, ctx);
         }
 
         function draw(machine, context){

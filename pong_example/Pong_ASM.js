@@ -1,3 +1,4 @@
+const pongCode = `
 cmp &0 1
 jeq :start
 
@@ -273,3 +274,4 @@ mov 1 &0
     add &9 1
     mov res &9
     ret
+`;
