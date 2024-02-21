@@ -9,11 +9,16 @@
         window.onload = ()=>{
             const canvas = document.getElementById('canvas');
             const ctx = canvas.getContext('2d');
+            const machineSettings = {
+                memory: 1024 * 2,
+                videoMemory: 289,
+                inputs: 1,
+            }
 
             fetch('./Pong.asm')
                 .then(r => r.text())
                 .then(t => {
-                    machine = new Machine(t);
+                    machine = new Machine(t, machineSettings);
                     machine.setInput(0, 112);
                     canvas.addEventListener('mousemove', e=>{
                         const percentage = e.offsetY / canvas.clientHeight;

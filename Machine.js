@@ -103,6 +103,12 @@ const instructionCode = {
     },
 }
 
+const DEFAULT_SETTINGS = {
+    memory: 1024,
+    videoMemory: 256,
+    inputs: 4,
+}
+
 class Machine {
     static MEMORY_SIZE = 1024 * 2;
 
@@ -124,17 +130,19 @@ class Machine {
         ret: 0,
     }
 
-    constructor(code){
+    constructor(code, settings = DEFAULT_SETTINGS){
+        //Partition memory
+        this.memory = new Int16Array(settings.memory);
+        this.registers.vm = Machine.MEMORY_SIZE - settings.videoMemory;
+        this.registers.inp = this.registers.vm - settings.inputs;
+        this.registers.stp = this.registers.inp;
+
+        //Parse and compile instructions
         const lines = code.split('\n')
             .map(i => i.trim());
         const labelMap = this.getLabelMap(lines);
         this.instructions = lines
             .map((line, lineNumber) => this.parseInstruction(lineNumber, line, labelMap));
-        
-        //Partition memory
-        this.registers.vm = Machine.MEMORY_SIZE - 289;
-        this.registers.inp = this.registers.vm - 4;
-        this.registers.stp = this.registers.inp;
     }
 
     getLabelMap(lines){
