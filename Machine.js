@@ -41,6 +41,9 @@ const instructionCode = {
     abs: function(num){
         this.registers.res = Math.abs(num.get());
     },
+    rnd: function(num){
+        this.registers.res = Math.round(num.get());
+    },
     cmp: function(num1, num2){
         this.registers.res = Math.sign(num1.get() - num2.get());
     },
@@ -70,6 +73,10 @@ const instructionCode = {
         if (this.registers.res != 0) return;
         this.registers.lp = Math.max(Math.min(dest.get()), 0) - 1;
     },
+    jne: function(dest){
+        if (this.registers.res == 0) return;
+        this.registers.lp = Math.max(Math.min(dest.get()), 0) - 1;
+    },
     push: function(val){
         const data = val.get();
         this.registers.stp--;
@@ -89,7 +96,6 @@ const instructionCode = {
         this.registers.lp = insNum.get();
     },
     ret: function(){
-        //debugger;
         this.registers.lp = this.registers.ret;
     },
     end: function(){

@@ -7,8 +7,10 @@ mov 112 &2    # player Y
 mov 112 &3    # AI Y
 mov 144 &4    # ball x
 mov 112 &5    # ball y
-mov -3  &6    # ball vel x
+mov -3   &6   # ball vel x
 mov 5   &7    # ball vel y
+mov 0   &8    # miss flash counter
+mov 0   &9    # random seed
 
 mov 1 &0
 
@@ -31,7 +33,28 @@ mov 1 &0
     mov res &3
 
     call :updateBall()
+
+    #reset ball position
+    cmp &8 1
+    jne :flashScreen
+    mov 144 &4
+    mov 112 &5
+    call :getRandomSign()
+    mul r1 &6
+    mov res &6
+    call :getRandomSign()
+    mul r1 &7
+    mov res &7
+
+    :flashScreen
+    cmp &8 0
+    jeq :updateGameEnd
+    sub &8 1
+    mov res &8
     
+    :updateGameEnd
+    add 1 &9
+    mov res &9
     end
 
 :updateBall()
@@ -72,12 +95,51 @@ mov 1 &0
     push 5
     push 50
     call :sampleRect()
-    mov $7 ret
+    mov $6 ret
     pop 7
+    cmp r1 1
+    jlt :checkAI
+    mov 1 $1
+    jmp :bounceX
 
     :checkAI
+    cmp &4 164
+    jlt :checkOOB
     # check AI collision
+    push ret
+    push 273
+    push &3
+    add &4 4
+    push res
+    push &5
+    push 5
+    push 50
+    call :sampleRect()
+    mov $6 ret
+    pop 7
+    cmp r1 1
+    jlt :checkOOB
+    mov -1 $1
+    jmp :bounceX
 
+    :bounceX
+    abs &6
+    mul res $1
+    mov res &6
+
+    :checkOOB
+    cmp &8 0
+    jgt :updateBallEnd
+    cmp &4 -4
+    jle :ballMissed
+    cmp &4 292
+    jgt :ballMissed
+    jmp :updateBallEnd
+
+    :ballMissed
+    mov 7 &8
+
+    :updateBallEnd
     pop 2
     ret
 
@@ -90,6 +152,16 @@ mov 1 &0
         add vm $1
         mov res $0
         mov 0 r3
+
+        #skip paddle drawing if we're flashing
+        div &8 2
+        push res
+        rnd res
+        push res
+        sub $1 $0
+        abs res
+        pop 2
+        jgt :setPixelValue
 
         # skip player paddle drawing if we're too far right
         cmp $1 20
@@ -180,4 +252,24 @@ mov 1 &0
     max res 0    # clamp
 
     mov res r1
+    ret
+
+:getRandomSign()
+    # calculates random based on random seed
+    # @out r1 = random 1 or -1
+
+    mul &2 &9
+    div res 2
+    mov res r1
+    rnd res
+    mov res r2
+    sub r1 r2
+    cmp res 0
+    jne :getRandomSignEnd
+    mov 1 res
+
+    :getRandomSignEnd
+    mov res r1
+    add &9 1
+    mov res &9
     ret
