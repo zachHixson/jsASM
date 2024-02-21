@@ -269,7 +269,6 @@ class Machine {
     }
 
     draw(ctx){
-        //console.time('render');
         const canvas = ctx.canvas;
         const imgData = new ImageData(canvas.width, canvas.height);
 
@@ -296,7 +295,6 @@ class Machine {
         this.registers.vb = 1;
         this.registers.lp = 0;
         this.execute();
-        //console.timeEnd('render');
     }
 
     setInput(addr, value){
