@@ -3,26 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pong ASM</title>
+    <title>Drawing</title>
     <script src="../machine.js"></script>
-    <script src="./Pong_ASM.js"></script>
+    <script src="./Drawing.js"></script>
     <script>
         window.onload = ()=>{
             const canvas = document.getElementById('canvas');
             const ctx = canvas.getContext('2d');
-            const machineSettings = {
-                memory: 1024 * 2,
-                videoMemory: 289,
-                inputs: 1,
-            };
-            const machine = new Machine(pongCode, machineSettings);
-
-            machine.setInput(0, 112);
-            canvas.addEventListener('mousemove', e=>{
-                const percentage = e.offsetY / canvas.clientHeight;
-                const screenVal = Math.round(percentage * 224);
-                machine.setInput(0, screenVal);
-            });
+            const machine = new Machine(drawingCode, {memory: 1024, videoMemory: 128, inputs: 0});
 
             draw(machine, ctx);
         }
@@ -53,6 +41,6 @@
     </style>
 </head>
 <body>
-    <canvas id="canvas" width="288" height="224"></canvas>
+    <canvas id="canvas" width="128" height="128"></canvas>
 </body>
 </html>

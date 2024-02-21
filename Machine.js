@@ -110,10 +110,8 @@ const DEFAULT_SETTINGS = {
 }
 
 class Machine {
-    static MEMORY_SIZE = 1024 * 2;
-
     isRunning = true;
-    memory = new Int16Array(Machine.MEMORY_SIZE);
+    memory;
     instructions;
     registers = {
         lp: 0,
@@ -133,7 +131,7 @@ class Machine {
     constructor(code, settings = DEFAULT_SETTINGS){
         //Partition memory
         this.memory = new Int16Array(settings.memory);
-        this.registers.vm = Machine.MEMORY_SIZE - settings.videoMemory;
+        this.registers.vm = settings.memory - settings.videoMemory;
         this.registers.inp = this.registers.vm - settings.inputs;
         this.registers.stp = this.registers.inp;
 
@@ -268,7 +266,7 @@ class Machine {
         } while(this.registers.lp < this.instructions.length);
     }
 
-    draw(ctx){
+    run(ctx){
         const canvas = ctx.canvas;
         const imgData = new ImageData(canvas.width, canvas.height);
 

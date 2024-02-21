@@ -2,16 +2,17 @@
 
 A small experimental virtual machine built in Javascript
 
-### How to run Pong example
+### How to run included examples
 
-Simply download it and run `index.html`.
+Simply run the `index.html` from the example's folder.
 
 ### How to use virtual machine with your own assembly
 
 - Import the `Machine.js` file
 - Construct the virtual machine with `new Machine(asm_text)`
-    - Optionally a `settings` object can be provided to customize memory example. Available setings are `{memory, videoMemory, inputs}`. See included `pong_example` for relevant settings
-    - `yourMachine.setInput(input_idx, value)` can be used to pass input values from Javascript into your assembly code
+    - Optionally a `settings` object can be provided to customize memory example. Available setings are `{memory, videoMemory, inputs}`. See included examples for relevant settings
+- `yourMachine.run(canvas_context)` - Runs ths machine for one cycle
+- `yourMachine.setInput(input_idx, value)` can be used to pass input values from Javascript into your assembly code
 
 ### General Operation
 
