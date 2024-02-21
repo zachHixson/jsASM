@@ -88,6 +88,7 @@ Accessing Memory:
 - [name of register] - Accesses specified register
 - `:labelName` - Replaced at compile time with the line number of the corresponding label.
     - NOTE: The above only applies when used as an argument. For use as an instruction, see below.
+- Accessors can be stacked. For example `$&r1` will access the item in the stack corresponding the value stored in the memory address specified in register `r1`. Any combination, with any arbitrary number of accessors will work.
 
 Misc:
 
