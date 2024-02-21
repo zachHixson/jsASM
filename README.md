@@ -16,12 +16,12 @@ Simply run the `index.html` from the example's folder.
 
 ### General Operation
 
-- The machine will execute the code once for every vertical line in the supplied canvas, then copy the current video memory to the respective line on the canvas
-- The machine will the simulate a "v-blank," and run the code once again without copying video memory to the canvas
+- When run, the machine will execute the code once for every vertical line in the supplied canvas, then copy the current video memory to the respective line on the canvas
+- The machine will then simulate a "v-blank," and run the code once again without copying video memory to the canvas
 
 ### Registers
 
-All registers are capable of holding floating point values of any size Javascript can store. Memory is limited to Int16 values.
+All registers are capable of holding floating point values of any size Javascript can store, as opposed to main memory whcih is limited to Int16 values.
 
 - lp - Current line being executed
 - r1 through r4 - General purpose registers
