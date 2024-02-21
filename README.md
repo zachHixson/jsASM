@@ -10,7 +10,7 @@ Simply run the `index.html` from the example's folder.
 
 - Import the `Machine.js` file
 - Construct the virtual machine with `new Machine(asm_text)`
-    - Optionally a `settings` object can be provided to customize memory example. Available setings are `{memory, videoMemory, inputs}`. See included examples for relevant settings
+    - Optionally a `settings` object can be provided to customize memory example. Available setings are `{memory, videoMemory, inputs}`.
 - `yourMachine.run(canvas_context)` - Runs ths machine for one cycle
 - `yourMachine.setInput(input_idx, value)` can be used to pass input values from Javascript into your assembly code
 
